@@ -1,0 +1,8 @@
+{
+  "social_media_continuous_minutes": 30,
+  "total_screen_time_hourly_minutes": 120,
+  "entertainment_after_hours": "23:00",
+  "scrolling_detection_threshold": 15,
+  "productivity_gap_hours": 4,
+  "daily_limit_minutes": 300
+}

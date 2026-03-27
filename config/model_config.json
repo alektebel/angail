@@ -1,0 +1,7 @@
+{
+  "model_type": "simple",
+  "use_quantized": true,
+  "inference_timeout_seconds": 3,
+  "max_memory_mb": 1500,
+  "system_prompt": "You are a gentle, supportive digital guardian angel helping the user maintain healthy phone habits. You have access to their current usage patterns and can suggest positive alternatives to doomscrolling."
+}

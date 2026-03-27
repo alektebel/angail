@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Angail" parent="android:Theme.Material.Light.DarkActionBar">
+        <item name="android:statusBarColor">@android:color/system_accent1_600</item>
+    </style>
+</resources>
