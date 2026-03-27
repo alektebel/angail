@@ -26,6 +26,7 @@ class GitHubAuth(private val context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    fun isConfigured(): Boolean = CLIENT_ID != "YOUR_GITHUB_CLIENT_ID"
     fun isAuthenticated(): Boolean = prefs.getString(KEY_TOKEN, null) != null
     fun getToken(): String? = prefs.getString(KEY_TOKEN, null)
     fun getLogin(): String? = prefs.getString(KEY_LOGIN, null)
@@ -40,7 +41,17 @@ class GitHubAuth(private val context: Context) {
         val intervalSeconds: Int
     )
 
-    suspend fun requestDeviceCode(): DeviceCodeResponse? = withContext(Dispatchers.IO) {
+    // Returns null on success-path error; throws IllegalStateException with human-readable message
+    // on configuration or API errors so callers can show the right message.
+    suspend fun requestDeviceCode(): DeviceCodeResponse = withContext(Dispatchers.IO) {
+        if (!isConfigured()) {
+            throw IllegalStateException(
+                "GitHub Client ID not set.\n" +
+                "1. Go to github.com/settings/developers\n" +
+                "2. Create an OAuth App (type: Public client)\n" +
+                "3. Paste the Client ID into GitHubAuth.CLIENT_ID"
+            )
+        }
         try {
             val url = URL("https://github.com/login/device/code")
             val conn = (url.openConnection() as HttpURLConnection).apply {
@@ -50,8 +61,12 @@ class GitHubAuth(private val context: Context) {
                 doOutput = true
                 outputStream.write("client_id=$CLIENT_ID&scope=$SCOPE".toByteArray())
             }
-            if (conn.responseCode != 200) return@withContext null
-            val json = JSONObject(conn.inputStream.bufferedReader().readText())
+            val body = (conn.inputStream ?: conn.errorStream)?.bufferedReader()?.readText()
+                ?: throw IllegalStateException("Empty response from GitHub (HTTP ${conn.responseCode})")
+            val json = JSONObject(body)
+            if (json.has("error")) {
+                throw IllegalStateException("GitHub error: ${json.optString("error_description", json.getString("error"))}")
+            }
             DeviceCodeResponse(
                 deviceCode = json.getString("device_code"),
                 userCode = json.getString("user_code"),
@@ -59,9 +74,11 @@ class GitHubAuth(private val context: Context) {
                 expiresIn = json.getInt("expires_in"),
                 intervalSeconds = json.getInt("interval")
             )
+        } catch (e: IllegalStateException) {
+            throw e
         } catch (e: Exception) {
             Log.e(TAG, "requestDeviceCode: ${e.message}")
-            null
+            throw IllegalStateException("Could not reach GitHub: ${e.message}")
         }
     }
 

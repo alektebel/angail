@@ -357,9 +357,10 @@ fun GitHubSection(githubAuth: GitHubAuth) {
                         onClick = {
                             authState = GitHubAuthState.RequestingCode
                             scope.launch {
-                                val code = githubAuth.requestDeviceCode()
-                                if (code == null) {
-                                    errorMessage = "Failed to contact GitHub. Check your connection."
+                                val code = try {
+                                    githubAuth.requestDeviceCode()
+                                } catch (e: Exception) {
+                                    errorMessage = e.message ?: "Unknown error"
                                     authState = GitHubAuthState.Error
                                     return@launch
                                 }
