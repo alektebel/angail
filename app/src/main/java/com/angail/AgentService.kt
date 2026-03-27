@@ -42,7 +42,7 @@ class AgentService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        agentController = AgentController(this)
+        agentController = AgentController(this, GitHubAuth(this))
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
